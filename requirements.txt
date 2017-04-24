@@ -1,0 +1,6 @@
+numpy
+scipy
+matplotlib
+wget=2.2
+sphinx
+sgp4
