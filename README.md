@@ -51,7 +51,7 @@ we're using python 3-5 and that we have the conda-forge channel installed (for s
 > `conda install --yes --file requirements.txt`
 
 ##### Clone the project from github:
-> `git clone https://github.com/NuSTAR/nustar_pysolar.git`
+> `git clone https://github.com/NuSTAR/nustar_lunar_pointing.git`
 
 ##### Install nustar_pysolar:
 
