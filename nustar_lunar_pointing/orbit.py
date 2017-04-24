@@ -1,7 +1,5 @@
-# Code for parsing a TLE file
 from datetime import datetime
-
-
+from astropy.time import Time
 
 def read_tle_file(tlefile, **kwargs):
     """
@@ -16,7 +14,6 @@ def read_tle_file(tlefile, **kwargs):
     from os import path
     from datetime import datetime
     # Catch if the file can't be opened:
-    
     try:
         f = open(tlefile, 'r')
     except FileNotFoundError:
@@ -62,5 +59,74 @@ def get_epoch_tle(epoch, tlefile):
     good_line2 = line2[min_ind]
 
     return mindt, good_line1, good_line2
+
+   
+def convert_nustar_time(t, leap=5):
+    ''' 
+    
+    Converts MET seconds to a datetime object.
+    
+    Default is to subtract off 5 leap seconds.
+
+    '''
+    import astropy.units as u
+    mjdref = 55197*u.d
+    met = (t - leap)* u.s + mjdref
+    met_datetime = Time(met.to(u.d), format = 'mjd').datetime
+    return met_datetime
+
+
+def get_nustar_location(checktime, line1, line2):
+    ''' 
+    
+    Code to determine the spacecraft location from the TLE.
+    
+    Inputs are a datetime object and the two lines of the TLE you want to use.
+    
+    Returns a tuple that has the X, Y, and Z geocentric coordinates (in km).
+    
+    '''
+    
+    from sgp4.earth_gravity import wgs72
+    from sgp4.io import twoline2rv
+    from astropy.coordinates import EarthLocation
+    
+    satellite = twoline2rv(line1, line2, wgs72)
+    position, velocity = satellite.propagate(
+        checktime.year, checktime.month, checktime.day, checktime.hour, checktime.minute, checktime.second)
+
+    return position
+
+
+    
+def get_moon_j2000(epoch, line1, line2, position = None):
+    '''
+    
+    Code to determine the apparent J2000 position for a given
+    time and at a given position for the observatory.
+    
+    epoch needs to be a datetime or Time object.
+    
+    position is a list/tuple of X/Y/Z positions
+    
+    '''
+    
+    from astropy.time import Time
+    from astropy.coordinates import get_moon, EarthLocation
+    import astropy.units as u
+    
+    if position is None:
+        position = get_nustar_location(epoch, line1, line2)
+        
+    t = Time(epoch)
+    
+    loc = EarthLocation.from_geocentric(*position * u.km)
+
+    moon_coords = get_moon(t,loc)
+    
+    # Get just the coordinates in degrees
+    
+    ra_moon, dec_moon = moon_coords.ra.degree * u.deg, moon_coords.dec.degree*u.deg
+    return ra_moon, dec_moon
 
 
