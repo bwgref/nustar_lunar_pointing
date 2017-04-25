@@ -109,6 +109,8 @@ def get_moon_j2000(epoch, line1, line2, position = None):
     
     position is a list/tuple of X/Y/Z positions
     
+    Returns RA, DEC, and moon_coord values.
+    
     '''
     
     from astropy.time import Time
@@ -127,6 +129,6 @@ def get_moon_j2000(epoch, line1, line2, position = None):
     # Get just the coordinates in degrees
     
     ra_moon, dec_moon = moon_coords.ra.degree * u.deg, moon_coords.dec.degree*u.deg
-    return ra_moon, dec_moon
-
+    return ra_moon, dec_moon, moon_coords
+    
 
