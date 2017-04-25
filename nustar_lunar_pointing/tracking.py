@@ -46,7 +46,12 @@ def get_epoch_tle(epoch, tlefile):
 
     times, line1, line2 = read_tle_file(tlefile)
     from datetime import datetime
-
+    from astropy.time import Time
+    
+    # Allow astropy Time objects
+    if type(epoch) is Time:
+        epoch = epoch.datetime
+        
     mindt = 100.
     min_ind = 0
     for ind, t in enumerate(times):
@@ -94,7 +99,8 @@ def get_nustar_location(checktime, line1, line2):
     
     satellite = twoline2rv(line1, line2, wgs72)
     position, velocity = satellite.propagate(
-        checktime.year, checktime.month, checktime.day, checktime.hour, checktime.minute, checktime.second)
+        checktime.year, checktime.month, checktime.day,
+        checktime.hour, checktime.minute, checktime.second)
 
     return position
 
@@ -145,9 +151,15 @@ def get_moon_j2000(epoch, line1, line2, position = None):
     from astropy.coordinates import get_moon, EarthLocation
     import astropy.units as u
     import sys
+    from datetime import datetime
+    
+    if type(epoch) is Time:
+        epoch = epoch.datetime
+    
     
     if position is None:
         position = get_nustar_location(epoch, line1, line2)  # position in ECI coords
+
 
     t=Time(epoch)
     
