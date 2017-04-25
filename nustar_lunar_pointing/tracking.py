@@ -60,6 +60,7 @@ def get_epoch_tle(epoch, tlefile):
 
     return mindt, good_line1, good_line2
 
+
    
 def convert_nustar_time(t, leap=5):
     ''' 
@@ -98,6 +99,35 @@ def get_nustar_location(checktime, line1, line2):
     return position
 
 
+
+def eci2el(x,y,z,dt):
+    """
+    Convert Earth-Centered Inertial (ECI) cartesian coordinates to ITRS for astropy EarthLocation object.
+
+    Inputs :
+    x = ECI X-coordinate 
+    y = ECI Y-coordinate 
+    z = ECI Z-coordinate 
+    dt = UTC time (datetime object)
+    """
+
+    from astropy.coordinates import GCRS, ITRS, EarthLocation, CartesianRepresentation
+    import astropy.units as u
+    
+    # convert datetime object to astropy time object
+    tt=Time(dt,format='datetime')
+
+    # Read the coordinates in the Geocentric Celestial Reference System
+    gcrs = GCRS(CartesianRepresentation(x=x, y=y,z=z), obstime=tt)
+
+    # Convert it to an Earth-fixed frame
+    itrs = gcrs.transform_to(ITRS(obstime=tt))
+
+    el = EarthLocation.from_geocentric(itrs.x, itrs.y, itrs.z) 
+
+    return el
+
+
     
 def get_moon_j2000(epoch, line1, line2, position = None):
     '''
@@ -109,26 +139,25 @@ def get_moon_j2000(epoch, line1, line2, position = None):
     
     position is a list/tuple of X/Y/Z positions
     
-    Returns RA, DEC, and moon_coord values.
-    
     '''
     
     from astropy.time import Time
     from astropy.coordinates import get_moon, EarthLocation
     import astropy.units as u
+    import sys
     
     if position is None:
-        position = get_nustar_location(epoch, line1, line2)
-        
-    t = Time(epoch)
+        position = get_nustar_location(epoch, line1, line2)  # position in ECI coords
+
+    t=Time(epoch)
     
-    loc = EarthLocation.from_geocentric(*position * u.km)
+    loc = eci2el(*position*u.km,t)
 
     moon_coords = get_moon(t,loc)
     
     # Get just the coordinates in degrees
     
     ra_moon, dec_moon = moon_coords.ra.degree * u.deg, moon_coords.dec.degree*u.deg
-    return ra_moon, dec_moon, moon_coords
-    
+    return ra_moon, dec_moon
+
 
